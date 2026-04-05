@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Room - Smart Study</title>
+    <style>
+        /* --- CSS Variables & Theming --- */
+        :root {
+            --bg-color: #f3f4f6;
+            --sidebar-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --sidebar-bg: #1f2937;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --primary: #60a5fa;
+            --primary-hover: #3b82f6;
+            --card-bg: #1f2937;
+            --border-color: #374151;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-color: #0f0f1b;
+            --sidebar-bg: #1a1a2e;
+            --text-main: #00ffcc;
+            --text-muted: #ff007f;
+            --primary: #ff007f;
+            --primary-hover: #e60073;
+            --card-bg: #16213e;
+            --border-color: #00ffcc;
+        }
+
+        /* --- Global Reset & Typography --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        input, button, select {
+            font-family: inherit;
+        }
+
+        /* --- View Management --- */
+        .view {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .view.active {
+            display: flex;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Login Screen --- */
+        .login-container {
+            margin: auto;
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .login-container p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+
+        /* --- Main App Layout --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 40px;
+        }
+
+        .nav-link {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-link:hover {
+            color: var(--text-main);
+            background-color: var(--bg-color);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .theme-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .btn-logout {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-logout:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        /* --- Profile Dashboard --- */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .stat-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* --- Study Tracker --- */
+        .tracker-container {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .timer-display {
+            font-size: 4.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin: 30px 0;
+            color: var(--text-main);
+            letter-spacing: -2px;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-timer {
+            flex: 1;
+            max-width: 140px;
+            padding: 12px;
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-timer:hover { opacity: 0.9; }
+        .btn-timer:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-start { background-color: var(--success); }
+        .btn-pause { background-color: var(--warning); }
+        .btn-stop { background-color: var(--danger); }
+
+        .session-log {
+            margin-top: 30px;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .session-item {
+            padding: 16px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-view" class="view active">
+        <div class="login-container">
+            <h1>Reading Room</h1>
+            <p>Your Digital Study Companion</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Full Name</label>
+                    <input type="text" id="username" class="form-control" placeholder="e.g. John Doe" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn">Access Platform</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-view" class="view">
+        
+        <aside class="sidebar">
+            <div class="brand">Reading Room</div>
+            
+            <nav id="nav-menu">
+                <div class="nav-link active" data-target="profile">
+                    Profile Dashboard
+                </div>
+                <div class="nav-link" data-target="tracker">
+                    Self Tracker
+                </div>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div>
+                    <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: block;">Theme</label>
+                    <select id="themeSelect" class="theme-select">
+                        <option value="light">System Light</option>
+                        <option value="dark">Premium Dark</option>
+                        <option value="cyberpunk">Cyberpunk Neon</option>
+                    </select>
+                </div>
+                <button id="logoutBtn" class="btn btn-logout">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <div id="profile" class="tab-content active">
+                <h2 style="margin-bottom: 24px;">Welcome back, <span id="welcomeName">User</span>!</h2>
+                
+                <div class="profile-header">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <div>
+                        <h2 id="profileName">User Name</h2>
+                        <p style="color: var(--text-muted);">Premium Member</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="totalHoursLogged">0h 0m</h3>
+                        <p>Total Study Time</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalSessions">0</h3>
+                        <p>Completed Sessions</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active</h3>
+                        <p>Subscription Status</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tracker" class="tab-content" style="display: none;">
+                <h2 style="margin-bottom: 24px;">Self Tracker</h2>
+                
+                <div class="tracker-container">
+                    <input type="text" id="subjectInput" class="form-control" placeholder="What are you focusing on? (e.g., Biology Ch 3)">
+                    
+                    <div class="timer-display" id="timerDisplay">00:00:00</div>
+                    
+                    <div class="timer-controls">
+                        <button class="btn-timer btn-start" id="btnStart">Start</button>
+                        <button class="btn-timer btn-pause" id="btnPause" disabled>Pause</button>
+                        <button class="btn-timer btn-stop" id="btnStop" disabled>Finish</button>
+                    </div>
+
+                    <div class="session-log">
+                        <h3 style="margin-bottom: 16px; font-size: 1.2rem;">Today's Sessions</h3>
+                        <div id="logList">
+                            <p style="color: var(--text-muted); font-size: 0.9rem;" id="emptyLogMsg">No sessions recorded yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <script>
+        /**
+         * AppState Management
+         * Handles User Data and Session Statistics
+         */
+        const AppState = {
+            user: null,
+            stats: {
+                totalSeconds: 0,
+                sessionCount: 0
+            }
+        };
+
+        /**
+         * DOM Elements Selection
+         */
+        // Views
+        const viewLogin = document.getElementById('login-view');
+        const viewApp = document.getElementById('app-view');
+        
+        // Login Form
+        const loginForm = document.getElementById('loginForm');
+        const inputUsername = document.getElementById('username');
+        const btnLogout = document.getElementById('logoutBtn');
+        
+        // Profile Elements
+        const elWelcomeName = document.getElementById('welcomeName');
+        const elProfileName = document.getElementById('profileName');
+        const elUserAvatar = document.getElementById('userAvatar');
+        const elTotalHours = document.getElementById('totalHoursLogged');
+        const elTotalSessions = document.getElementById('totalSessions');
+
+        // Navigation
+        const navLinks = document.querySelectorAll('.nav-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const themeSelect = document.getElementById('themeSelect');
+
+        // Timer Elements
+        const timerDisplay = document.getElementById('timerDisplay');
+        const subjectInput = document.getElementById('subjectInput');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnStop = document.getElementById('btnStop');
+        const logList = document.getElementById('logList');
+        const emptyLogMsg = document.getElementById('emptyLogMsg');
+
+
+        /**
+         * Authentication Logic
+         */
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const username = inputUsername.value.trim();
+            if(!username) return;
+
+            // Set User State
+            AppState.user = {
+                name: username,
+                initial: username.charAt(0).toUpperCase()
+            };
+
+            // Update DOM with user data
+            elWelcomeName.textContent = AppState.user.name.split(' ')[0]; // First name
+            elProfileName.textContent = AppState.user.name;
+            elUserAvatar.textContent = AppState.user.initial;
+
+            // Switch Views
+            viewLogin.classList.remove('active');
+            viewApp.classList.add('active');
+            
+            // Reset Form
+            loginForm.reset();
+        });
+
+        btnLogout.addEventListener('click', () => {
+            // Stop timer if running to prevent background tracking
+            if(Timer.isRunning) Timer.pause();
+            
+            // Clear State
+            AppState.user = null;
+            
+            // Switch Views
+            viewApp.classList.remove('active');
+            viewLogin.classList.add('active');
+            
+            // Reset to default tab
+            switchTab('profile');
+        });
+
+
+        /**
+         * Navigation & UI Logic
+         */
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const targetId = e.currentTarget.getAttribute('data-target');
+                switchTab(targetId);
+            });
+        });
+
+        function switchTab(tabId) {
+            // Update Navigation Highlighting
+            navLinks.forEach(link => {
+                link.classList.toggle('active', link.getAttribute('data-target') === tabId);
+            });
+
+            // Show/Hide Content
+            tabContents.forEach(tab => {
+                if(tab.id === tabId) {
+                    tab.style.display = 'block';
+                    // Trigger reflow for animation
+                    void tab.offsetWidth; 
+                    tab.style.animation = 'fadeIn 0.3s ease';
+                } else {
+                    tab.style.display = 'none';
+                }
+            });
+        }
+
+        // Theme Switcher
+        themeSelect.addEventListener('change', (e) => {
+            const theme = e.target.value;
+            if (theme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+        });
+
+
+        /**
+         * Study Timer Module
+         */
+        const Timer = {
+            seconds: 0,
+            interval: null,
+            isRunning: false,
+
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.interval = setInterval(() => this.tick(), 1000);
+                this.updateUI('start');
+            },
+
+            pause() {
+                this.isRunning = false;
+                clearInterval(this.interval);
+                this.updateUI('pause');
+            },
+
+            stop() {
+                if (this.seconds === 0) return;
+                this.pause();
+                this.logSession();
+                
+                // Reset Timer
+                this.seconds = 0;
+                this.updateDisplay();
+                subjectInput.value = '';
+                this.updateUI('stop');
+            },
+
+            tick() {
+                this.seconds++;
+                this.updateDisplay();
+            },
+
+            formatTime(totalSecs) {
+                const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
+                const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
+                const s = String(totalSecs % 60).padStart(2, '0');
+                return `${h}:${m}:${s}`;
+            },
+
+            updateDisplay() {
+                timerDisplay.textContent = this.formatTime(this.seconds);
+            },
+
+            updateUI(state) {
+                if (state === 'start') {
+                    btnStart.disabled = true;
+                    btnPause.disabled = false;
+                    btnStop.disabled = false;
+                } else if (state === 'pause') {
+                    btnStart.disabled = false;
+                    btnPause.disabled = true;
+                } else if (state === 'stop') {
+                    btnStart.disabled = false;
+                    btnPause.disabled = true;
+                    btnStop.disabled = true;
+                }
+            },
+
+            logSession() {
+                // Remove empty state message
+                if (emptyLogMsg) emptyLogMsg.style.display = 'none';
+
+                const subject = subjectInput.value.trim() || "Untitled Study Session";
+                const timeString = this.formatTime(this.seconds);
+
+                // Create Log Element
+                const item = document.createElement('div');
+                item.className = 'session-item';
+                item.innerHTML = `
+                    <div style="font-weight: 500;">${subject}</div>
+                    <div style="color: var(--success); font-weight: bold; font-family: monospace; font-size: 1.1rem;">
+                        ${timeString}
+                    </div>
+                `;
+                
+                logList.insertBefore(item, logList.firstChild);
+
+                // Update App Stats
+                AppState.stats.totalSeconds += this.seconds;
+                AppState.stats.sessionCount += 1;
+                this.updateProfileStats();
+            },
+
+            updateProfileStats() {
+                const h = Math.floor(AppState.stats.totalSeconds / 3600);
+                const m = Math.floor((AppState.stats.totalSeconds % 3600) / 60);
+                
+                elTotalHours.textContent = `${h}h ${m}m`;
+                elTotalSessions.textContent = AppState.stats.sessionCount;
+            }
+        };
+
+        // Attach Timer Listeners
+        btnStart.addEventListener('click', () => Timer.start());
+        btnPause.addEventListener('click', () => Timer.pause());
+        btnStop.addEventListener('click', () => Timer.stop());
+
+    </script>
+</body>
+</html>
+
+    
